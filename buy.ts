@@ -34,7 +34,7 @@ import pino from 'pino';
 import bs58 from 'bs58';
 import * as fs from 'fs';
 import * as path from 'path';
-
+// import chalk from 'chalk';
 const transport = pino.transport({
   target: 'pino-pretty',
 });
@@ -173,6 +173,18 @@ export async function processRaydiumPool(id: PublicKey, poolState: LiquidityStat
       return;
     }
   }
+  const qvault= await solanaConnection.getBalance(poolState.quoteVault)
+
+  const solamount=qvault/Math.pow(10,9)
+
+  if(solamount<1000){
+
+  console.log('池子sol 小于 限定数量 return')
+  return;
+  }
+
+
+
 
   await buy(id, poolState);
 }
@@ -414,6 +426,12 @@ const runListener = async () => {
 
       if (poolOpenTime > runTimestamp && !existing) {
         existingLiquidityPools.add(key);
+        const qvault= await solanaConnection.getBalance(poolState.quoteVault)
+
+        const solamount=qvault/Math.pow(10,9)
+        // console.log(chalk.blue('监听到新的流动性池子:'+poolState.baseMint.toBase58()))
+        // const solamountcolor= solamount>50?chalk.green:chalk.red
+        console.log('池子大小 '+ solamount + 'SOL')
         const _ = processRaydiumPool(updatedAccountInfo.accountId, poolState);
       }
     },
@@ -448,6 +466,7 @@ const runListener = async () => {
       const existing = existingOpenBookMarkets.has(key);
       if (!existing) {
         existingOpenBookMarkets.add(key);
+        
         const _ = processOpenBookMarket(updatedAccountInfo);
       }
     },
